@@ -592,7 +592,7 @@ class StructureLoader():
             
             
 # The following gather functions
-# Seems not to be used in the graph convolutional network
+# B: Seems not to be used in the graph convolutional network
 def gather_edges(edges, neighbor_idx):
     # Features [B,N,N,C] at Neighbor indices [B,N,K] => Neighbor features [B,N,K,C]
     neighbors = neighbor_idx.unsqueeze(-1).expand(-1, -1, -1, edges.size(-1))
@@ -602,10 +602,19 @@ def gather_edges(edges, neighbor_idx):
 def gather_nodes(nodes, neighbor_idx):
     # Features [B,N,C] at Neighbor indices [B,N,K] => [B,N,K,C]
     # Flatten and expand indices per batch [B,N,K] => [B,NK] => [B,NK,C]
+    
+    # B: flatten [B,N,K] to [B,NK]
     neighbors_flat = neighbor_idx.view((neighbor_idx.shape[0], -1))
+    
+    # B: expand [B,NK] to [B,NK,C]
     neighbors_flat = neighbors_flat.unsqueeze(-1).expand(-1, -1, nodes.size(2))
+    
+    
     # Gather and re-pack
+    # B: gather [B,N,C] at [B,NK,C] => [B,NK,C]
     neighbor_features = torch.gather(nodes, 1, neighbors_flat)
+    
+    # B: reshape [B,NK,C] to [B,N,K,C]
     neighbor_features = neighbor_features.view(list(neighbor_idx.shape)[:3] + [-1])
     return neighbor_features
 
