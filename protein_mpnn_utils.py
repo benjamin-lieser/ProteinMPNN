@@ -624,8 +624,10 @@ def gather_nodes_t(nodes, neighbor_idx):
     neighbor_features = torch.gather(nodes, 1, idx_flat)
     return neighbor_features
 
+# B: Extracts all the information from the E_idx nodes in h_nodes and concatinates this information with the h_neighbors
 def cat_neighbors_nodes(h_nodes, h_neighbors, E_idx):
     h_nodes = gather_nodes(h_nodes, E_idx)
+    # B: concat along the C dimension
     h_nn = torch.cat([h_neighbors, h_nodes], -1)
     return h_nn
 
