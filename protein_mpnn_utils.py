@@ -592,6 +592,7 @@ class StructureLoader():
             
             
 # The following gather functions
+# Seems not to be used in the graph convolutional network
 def gather_edges(edges, neighbor_idx):
     # Features [B,N,N,C] at Neighbor indices [B,N,K] => Neighbor features [B,N,K,C]
     neighbors = neighbor_idx.unsqueeze(-1).expand(-1, -1, -1, edges.size(-1))
