@@ -41,47 +41,78 @@ def range2str(r1, r2, r3):
     return ", " + l
 
 def get_fixed_pos(pdb: str):
-    if len(pdb) == 4: # check if filename is just a pdb id
-        if pdb == '8ee2':
-            return range2str((25, 31), (51, 55), (97, 108))
-        elif pdb == '7olz':
-            return range2str((23, 35), (50, 64), (99, 116))
-        elif pdb == '8q7s':
-            return range2str((22, 33), (45, 63), (97, 117))
-        elif pdb == '8q93':
-            return range2str((23, 35), (51, 64), (99, 119))
-        else:
-            raise ValueError(f"Unknown pdb: {pdb}")
+    if pdb.startswith('8ee2'):
+        return range2str((25, 31), (51, 55), (97, 108))
+    elif pdb.startswith('7olz'):
+        return range2str((23, 35), (50, 64), (99, 116))
+    elif pdb.startswith('8q7s'):
+        return range2str((22, 33), (45, 63), (97, 117))
+    elif pdb.startswith('8q93'):
+        return range2str((23, 35), (51, 64), (99, 119))
     else:
-        if pdb.startswith('8ee2'):
-            return range2str((25, 31), (51, 55), (97, 108))
-        elif pdb.startswith('7olz'):
-            return range2str((23, 35), (50, 64), (99, 116))
-        elif pdb.startswith('8q7s'):
-            return range2str((22, 33), (45, 63), (97, 117))
-        elif pdb.startswith('8q93'):
-            return range2str((23, 35), (51, 64), (99, 119))
-        else:
-            raise ValueError(f"Unknown pdb: {pdb}")
+        raise ValueError(f"Unknown pdb: {pdb}")
+
+def get_fixed_pos_just_cdr3(pdb: str):
+    if pdb.startswith('8ee2'):
+        return range2str((25, 0), (51, 0), (97, 108))
+    elif pdb.startswith('7olz'):
+        return range2str((23, 0), (50, 0), (99, 116))
+    elif pdb.startswith('8q7s'):
+        return range2str((22, 0), (45, 0), (97, 117))
+    elif pdb.startswith('8q93'):
+        return range2str((23, 0), (51, 0), (99, 119))
+    else:
+        raise ValueError(f"Unknown pdb: {pdb}")
+def get_fixed_pos_without_cdr3(pdb: str):
+    if pdb.startswith('8ee2'):
+        return range2str((25, 31), (51, 55), (97, 0))
+    elif pdb.startswith('7olz'):
+        return range2str((23, 35), (50, 64), (99, 0))
+    elif pdb.startswith('8q7s'):
+        return range2str((22, 33), (45, 63), (97, 0))
+    elif pdb.startswith('8q93'):
+        return range2str((23, 35), (51, 64), (99, 0))
+    else:
+        raise ValueError(f"Unknown pdb: {pdb}")
 
 rule fixed_pos:
     input:
         "data/json/{pdb}.json"
     output:
-        "data/fixed_pos/{pdb}.json"
+        "data/fixed_pos_all/{pdb}.json"
     run:
         chain = get_chain_list(wildcards.pdb)
         fixed_pos = get_fixed_pos(wildcards.pdb)
         shell(f"python helper_scripts/make_fixed_positions_dict.py --input_path={{input}} --output_path={{output}} --chain_list '{chain}' --position_list '{fixed_pos}' --specify_non_fixed")
 
+rule fixed_pos_just_cdr3:
+    input:
+        "data/json/{pdb}.json"
+    output:
+        "data/fixed_pos_justcdr3/{pdb}.json"
+    run:
+        chain = get_chain_list(wildcards.pdb)
+        fixed_pos = get_fixed_pos_just_cdr3(wildcards.pdb)
+        shell(f"python helper_scripts/make_fixed_positions_dict.py --input_path={{input}} --output_path={{output}} --chain_list '{chain}' --position_list '{fixed_pos}' --specify_non_fixed")
+
+rule fixed_pos_cdr3:
+    input:
+        "data/json/{pdb}.json"
+    output:
+        "data/fixed_pos_cdr3/{pdb}.json"
+    run:
+        chain = get_chain_list(wildcards.pdb)
+        fixed_pos = get_fixed_pos_without_cdr3(wildcards.pdb)
+        shell(f"python helper_scripts/make_fixed_positions_dict.py --input_path={{input}} --output_path={{output}} --chain_list '{chain}' --position_list '{fixed_pos}' --specify_non_fixed")
+
 rule run_mpnn:
     input:
-        fix_pos = "data/fixed_pos/{pdb}.json",
+        fix_pos = "data/fixed_pos{cdr3}/{pdb}.json",
         pdb = "data/json/{pdb}.json"
     output:
-        "data/mpnn/{pdb}/score_only/pdb_pdb.npz"
+        "data/mpnn{cdr3}/{pdb}/score_only/pdb_pdb.npz"
     shell:
-        "python protein_mpnn_run.py --jsonl_path={input.pdb} --fixed_positions_jsonl={input.fix_pos} --out_folder data/mpnn/{wildcards.pdb} --seed 37 --score_only 1"
+        "python protein_mpnn_run.py --jsonl_path={input.pdb} --fixed_positions_jsonl={input.fix_pos} --out_folder data/mpnn{wildcards.cdr3}/{wildcards.pdb} --seed 42 --score_only 1"
 
 rule run_mpnn_prob:
     input:
@@ -90,7 +121,7 @@ rule run_mpnn_prob:
     output:
         "data/mpnn/{pdb}/unconditional_probs_only/pdb.npz"
     shell:
-        "python protein_mpnn_run.py --jsonl_path={input.pdb} --fixed_positions_jsonl={input.fix_pos} --out_folder data/mpnn/{wildcards.pdb} --seed 37 --unconditional_probs_only 1"
+        "python protein_mpnn_run.py --jsonl_path={input.pdb} --fixed_positions_jsonl={input.fix_pos} --out_folder data/mpnn{wildcards.cdr3}/{wildcards.pdb} --seed 42 --unconditional_probs_only 1"
 
 rule extract_cdr:
     input:
@@ -112,15 +143,15 @@ rule extract_cdr:
 
 rule extract_scores:
     input:
-        expand("data/mpnn/{pdb}/score_only/pdb_pdb.npz", pdb=NAMES)
+        expand("data/mpnn{{cdr3}}/{pdb}/score_only/pdb_pdb.npz", pdb=NAMES)
     output:
-        "data/scores.json"
+        "data/scores{cdr3}.json"
     run:
         import json
         import numpy as np
         scores = {}
         for pdb in NAMES:
-            data = np.load(f"data/mpnn/{pdb}/score_only/pdb_pdb.npz")
+            data = np.load(f"data/mpnn{wildcards.cdr3}/{pdb}/score_only/pdb_pdb.npz")
             scores[pdb] = data['score'].item()
         with open(output[0], 'w') as f:
             json.dump(scores, f)
