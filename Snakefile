@@ -69,7 +69,6 @@ rule fixed_pos:
     run:
         chain = get_chain_list(wildcards.pdb)
         fixed_pos = get_fixed_pos(wildcards.pdb)
-        print(fixed_pos)
         shell(f"python helper_scripts/make_fixed_positions_dict.py --input_path={{input}} --output_path={{output}} --chain_list '{chain}' --position_list '{fixed_pos}' --specify_non_fixed")
 
 rule run_mpnn:
@@ -80,3 +79,12 @@ rule run_mpnn:
         "data/mpnn/{pdb}/score_only/pdb_pdb.npz"
     shell:
         "python protein_mpnn_run.py --jsonl_path={input.pdb} --fixed_positions_jsonl={input.fix_pos} --out_folder data/mpnn/{wildcards.pdb} --seed 37 --score_only 1"
+
+rule run_mpnn_prob:
+    input:
+        fix_pos = "data/fixed_pos/{pdb}.json",
+        pdb = "data/json/{pdb}.json"
+    output:
+        "data/mpnn/{pdb}/unconditional_probs_only/pdb.npz"
+    shell:
+        "python protein_mpnn_run.py --jsonl_path={input.pdb} --fixed_positions_jsonl={input.fix_pos} --out_folder data/mpnn/{wildcards.pdb} --seed 37 --unconditional_probs_only 1"
