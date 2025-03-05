@@ -6,6 +6,7 @@ rule all:
     input:
         expand("data/mpnn/{pdb}/score_only/pdb_pdb.npz", pdb=NAMES),
         expand("data/cdr/{pdb}.txt", pdb=NAMES),
+        "data/scores.json"
 rule owndir:
     input:
         "data/proteinmpnn_pdbs/{pdb}.pdb"
@@ -40,13 +41,13 @@ def range2str(r1, r2, r3):
     return ", " + l
 
 def get_fixed_pos(pdb: str):
-    if len(pdb) == 4: # 8ee2, the others are longer
+    if len(pdb) == 4: # check if filename is just a pdb id
         if pdb == '8ee2':
-            return range2str((28, 34), (54, 58), (100, 111))
+            return range2str((25, 31), (51, 55), (97, 108))
         elif pdb == '7olz':
             return range2str((23, 35), (50, 64), (99, 116))
         elif pdb == '8q7s':
-            return range2str((23, 34), (46, 64), (98, 118))
+            return range2str((22, 33), (45, 63), (97, 117))
         elif pdb == '8q93':
             return range2str((23, 35), (51, 64), (99, 119))
         else:
