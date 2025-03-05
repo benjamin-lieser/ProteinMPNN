@@ -5,6 +5,7 @@ NAMES = glob_wildcards("data/proteinmpnn_pdbs/{pdb}.pdb").pdb
 rule all:
     input:
         expand("data/mpnn/{pdb}/score_only/pdb_pdb.npz", pdb=NAMES),
+        expand("data/cdr/{pdb}.txt", pdb=NAMES),
 rule owndir:
     input:
         "data/proteinmpnn_pdbs/{pdb}.pdb"
