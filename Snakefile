@@ -89,3 +89,21 @@ rule run_mpnn_prob:
         "data/mpnn/{pdb}/unconditional_probs_only/pdb.npz"
     shell:
         "python protein_mpnn_run.py --jsonl_path={input.pdb} --fixed_positions_jsonl={input.fix_pos} --out_folder data/mpnn/{wildcards.pdb} --seed 37 --unconditional_probs_only 1"
+
+rule extract_cdr:
+    input:
+        "data/mpnn/{pdb}/unconditional_probs_only/pdb.npz"
+    output:
+        "data/cdr/{pdb}.txt"
+    run:
+        import numpy as np
+        data = np.load(input[0])
+        S = data['S']
+        mask = data['design_mask']
+        cdr = S[mask == 1]
+
+        alphabet = 'ACDEFGHIKLMNPQRSTVWYX'
+        cdr = [alphabet[i] for i in cdr]
+        cdr = ''.join(cdr)
+        with open(output[0], 'w') as f:
+            f.write(cdr)
