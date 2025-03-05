@@ -108,3 +108,18 @@ rule extract_cdr:
         cdr = ''.join(cdr)
         with open(output[0], 'w') as f:
             f.write(cdr)
+
+rule extract_scores:
+    input:
+        expand("data/mpnn/{pdb}/score_only/pdb_pdb.npz", pdb=NAMES)
+    output:
+        "data/scores.json"
+    run:
+        import json
+        import numpy as np
+        scores = {}
+        for pdb in NAMES:
+            data = np.load(f"data/mpnn/{pdb}/score_only/pdb_pdb.npz")
+            scores[pdb] = data['score'].item()
+        with open(output[0], 'w') as f:
+            json.dump(scores, f)
