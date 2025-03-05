@@ -1,9 +1,10 @@
 import os
 
 NAMES = glob_wildcards("data/proteinmpnn_pdbs/{pdb}.pdb").pdb
-JSON = [f"data/proteinmpnn_json/{name}.json" for name in NAMES]
-PDB = [f"data/proteinmpnn_pdbs/{name}.pdb" for name in NAMES]
 
+rule all:
+    input:
+        expand("data/mpnn/{pdb}/score_only/pdb_pdb.npz", pdb=NAMES),
 rule owndir:
     input:
         "data/proteinmpnn_pdbs/{pdb}.pdb"
@@ -50,13 +51,13 @@ def get_fixed_pos(pdb: str):
         else:
             raise ValueError(f"Unknown pdb: {pdb}")
     else:
-        if pdb == '8ee2':
+        if pdb.startswith('8ee2'):
             return range2str((25, 31), (51, 55), (97, 108))
-        elif pdb == '7olz':
+        elif pdb.startswith('7olz'):
             return range2str((23, 35), (50, 64), (99, 116))
-        elif pdb == '8q7s':
+        elif pdb.startswith('8q7s'):
             return range2str((22, 33), (45, 63), (97, 117))
-        elif pdb == '8q93':
+        elif pdb.startswith('8q93'):
             return range2str((23, 35), (51, 64), (99, 119))
         else:
             raise ValueError(f"Unknown pdb: {pdb}")
