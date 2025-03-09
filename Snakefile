@@ -116,12 +116,20 @@ rule run_mpnn:
 
 rule run_mpnn_prob:
     input:
-        fix_pos = "data/fixed_pos/{pdb}.json",
+        fix_pos = "data/fixed_pos{cdr3}/{pdb}.json",
+        pdb = "data/json/{pdb}.json"
+    output:
+        "data/mpnn{cdr3}/{pdb}/unconditional_probs_only/pdb.npz"
+    shell:
+        "python protein_mpnn_run.py --jsonl_path={input.pdb} --fixed_positions_jsonl={input.fix_pos} --out_folder data/mpnn{wildcards.cdr3}/{wildcards.pdb} --seed 42 --unconditional_probs_only 1"
+
+rule run_mpnn_uncon_prob:
+    input:
         pdb = "data/json/{pdb}.json"
     output:
         "data/mpnn/{pdb}/unconditional_probs_only/pdb.npz"
     shell:
-        "python protein_mpnn_run.py --jsonl_path={input.pdb} --fixed_positions_jsonl={input.fix_pos} --out_folder data/mpnn{wildcards.cdr3}/{wildcards.pdb} --seed 42 --unconditional_probs_only 1"
+        "python protein_mpnn_run.py --jsonl_path={input.pdb} --out_folder data/mpnn/{wildcards.pdb} --seed 42 --unconditional_probs_only 1"
 
 rule extract_cdr:
     input:
