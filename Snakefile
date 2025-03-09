@@ -4,9 +4,9 @@ NAMES = glob_wildcards("data/proteinmpnn_pdbs/{pdb}.pdb").pdb
 
 rule all:
     input:
-        expand("data/mpnn/{pdb}/score_only/pdb_pdb.npz", pdb=NAMES),
-        expand("data/cdr/{pdb}.txt", pdb=NAMES),
-        "data/scores.json"
+        "data/scores_all.json",
+        "data/scores_cdr3.json",
+        "data/scores_justcdr3.json",
 rule owndir:
     input:
         "data/proteinmpnn_pdbs/{pdb}.pdb"
