@@ -163,3 +163,60 @@ rule extract_scores:
             scores[pdb] = data['score'].item()
         with open(output[0], 'w') as f:
             json.dump(scores, f)
+
+rule entropy:
+    input:
+        mutated = "data/mpnn/{pdb}/unconditional_probs_only/pdb.npz",
+        wildtype = lambda w: f"data/mpnn/{w.pdb[:4]}/unconditional_probs_only/pdb.npz"
+    output:
+        "data/entropy/{pdb}.png"
+    run:
+        import numpy as np
+        import matplotlib
+        matplotlib.use('agg')
+        import matplotlib.pyplot as plt
+        import scipy
+
+        def get_entropy(p):
+            file = np.load(p)
+            print(file['log_p'].shape)
+            probs = scipy.special.softmax(file['log_p'].squeeze(), axis = 1)
+            return scipy.stats.entropy(probs, axis = 1)
+
+        mut_entropy = get_entropy(input.mutated)
+        wt_entropy = get_entropy(input.wildtype)
+
+        print(mut_entropy.shape)
+
+        plt.plot(range(1,len(mut_entropy) +1),mut_entropy, label='mutated')
+        plt.plot(range(1,len(mut_entropy) +1),wt_entropy, label='wildtype')
+        plt.plot(range(1,len(mut_entropy) +1),np.load(input.mutated)['mask'], label='difference')
+        plt.plot(range(1,len(mut_entropy) +1),np.load(input.wildtype)['mask'], label='difference')
+        plt.legend()
+        plt.savefig(output[0])
+
+rule kl:
+    input:
+        mutated = "data/mpnn/{pdb}/unconditional_probs_only/pdb.npz",
+        wildtype = lambda w: f"data/mpnn/{w.pdb[:4]}/unconditional_probs_only/pdb.npz"
+    output:
+        "data/kl/{pdb}.png"
+    run:
+        import numpy as np
+        import matplotlib
+        matplotlib.use('agg')
+        import matplotlib.pyplot as plt
+        import scipy
+
+        def kl_divergence(wild, mut):
+            wild = np.load(wild)['log_p'].squeeze()
+            mut = np.load(mut)['log_p'].squeeze()
+            p = scipy.special.softmax(wild, axis = 1)
+            q = scipy.special.softmax(mut, axis = 1)
+            return scipy.stats.entropy(p, q, axis = 1)
+
+        
+        kl = kl_divergence(input.wildtype, input.mutated)
+
+        plt.plot(range(1,len(kl) +1),kl)
+        plt.savefig(output[0])
