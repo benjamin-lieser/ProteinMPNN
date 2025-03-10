@@ -169,7 +169,7 @@ rule entropy:
         mutated = "data/mpnn/{pdb}/unconditional_probs_only/pdb.npz",
         wildtype = lambda w: f"data/mpnn/{w.pdb[:4]}/unconditional_probs_only/pdb.npz"
     output:
-        "data/entropy/{pdb}.png"
+        "data/entropy/{pdb}.pdf"
     run:
         import numpy as np
         import matplotlib
@@ -189,9 +189,7 @@ rule entropy:
         print(mut_entropy.shape)
 
         plt.plot(range(1,len(mut_entropy) +1),mut_entropy, label='mutated')
-        plt.plot(range(1,len(mut_entropy) +1),wt_entropy, label='wildtype')
-        plt.plot(range(1,len(mut_entropy) +1),np.load(input.mutated)['mask'], label='difference')
-        plt.plot(range(1,len(mut_entropy) +1),np.load(input.wildtype)['mask'], label='difference')
+        plt.plot(range(1,len(mut_entropy) +1),wt_entropy, label='original')
         plt.legend()
         plt.savefig(output[0])
 
@@ -200,7 +198,7 @@ rule kl:
         mutated = "data/mpnn/{pdb}/unconditional_probs_only/pdb.npz",
         wildtype = lambda w: f"data/mpnn/{w.pdb[:4]}/unconditional_probs_only/pdb.npz"
     output:
-        "data/kl/{pdb}.png"
+        "data/kl/{pdb}.pdf"
     run:
         import numpy as np
         import matplotlib
